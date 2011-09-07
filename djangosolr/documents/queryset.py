@@ -79,12 +79,14 @@ class Query(object):
     def __init__(self):
         self._q = None
         self._fq = None
+        self._sort = []
         self._params = {}
         
     def clone(self):
         clone = Query()
         clone._q = self._q
         clone._fq = self._fq
+        clone._sort.extend(self._sort) 
         clone._params.update(self._params)
         return clone
     
@@ -100,8 +102,11 @@ class Query(object):
         else:
             self._fq = fq 
     
-    def set(self, name, value):
-        self._params[name] = value
+    def sort(self, *fields):
+        self._sort.extend(fields)
+    
+    def raw(self, **kwargs):
+        self._params.update(kwargs)
         
     def set_limits(self, start, stop):
         if start is not None:
@@ -125,6 +130,11 @@ class Query(object):
         if self._fq:
             fq = QAnd(self._fq, fq)
         query.append(('fq', fq.get_query(meta)))
+        if self._sort:
+            sort = ','.join(['%s desc' % (meta.get_field_name(field),) if field.startswith('-')
+                             else '%s asc' % (meta.get_field_name(field),)
+                             for field in self._sort])
+            query.append(('sort', sort,))
         return query
 
 class QuerySet(object):
@@ -179,7 +189,7 @@ class QuerySet(object):
     def _fill_cache(self, num=None):
         if self._iter:
             try:
-                for i in range(num or 100):
+                for _ in range(num or 100):
                     self._result_cache.append(self._iter.next())
             except StopIteration:
                 self._iter = None
@@ -237,9 +247,18 @@ class QuerySet(object):
         for doc in self.response['response']['docs']:
             yield self._model.create(doc)
     
-    def set(self, name, value):
+    def sort(self, *fields):
         clone =  self._clone()
-        clone._query.set(name, value)
+        clone._query.sort(*fields)
+        return clone
+    
+    def count(self):
+        response = self._get_response()
+        return response['response']['numFound']
+    
+    def raw(self, **kwargs):
+        clone =  self._clone()
+        clone._query.raw(**kwargs)
         return clone
     
     def search(self, name, value):

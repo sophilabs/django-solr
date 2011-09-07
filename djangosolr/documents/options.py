@@ -1,4 +1,5 @@
 from django.utils.importlib import import_module
+from djangosolr.documents.util import escape
 
 class Options(object):
     
@@ -14,6 +15,9 @@ class Options(object):
             if field.name == name:
                 return field
         return None
+    
+    def get_field_name(self, name):
+        return escape('%s-%s' % (self.type, self.get_field(name).name,))
         
     def add_field(self, field):
         self.fields.append(field)
