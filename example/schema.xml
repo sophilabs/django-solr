@@ -61,9 +61,10 @@
     <field name="id" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
     <field name="type" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
 
-    <field name="movie-title" type="string" indexed="true" stored="true" multivalued="false" />
-    <field name="movie-director" type="string" indexed="true" stored="true" multivalued="false" />
-    <field name="movie-text" type="string" indexed="true" stored="true" multivalued="true" />
+    <field name="movie-id" type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="movie-title" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="movie-director" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="movie-text" type="string" indexed="true" stored="true" multiValued="true" />
    
   </fields>
 

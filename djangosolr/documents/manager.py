@@ -14,13 +14,13 @@ class ManagerDescriptor(object):
 
 class Manager(object):
     
-    def contribute_to_class(self, model, name):
+    def _contribute_to_class(self, model, name):
         self._model = model
         setattr(model, name, ManagerDescriptor(self))
         if not getattr(model, '_default_manager', None):
             model._default_manager = self
             
-    def _request(self, method, path, query=None, body=None):
+    def request(self, method, path, query=None, body=None):
         try:
             uri = '%s%s?wt=json' % (settings.DJANGOSOLR_URL, path,)
             if query:
@@ -38,17 +38,28 @@ class Manager(object):
         return QuerySet(self._model)
     
     def all(self):
-        return self._get_query_set().set('fq', settings.DJANGOSOLR_TYPE_FIELD + ':' + self._model._meta.type)
+        return self._get_query_set()
+
+    def search(self, name, value):
+        return self._get_query_set().search(name, value)
+    
+    def q(self, q):
+        return self._get_query_set().q(q)
+    
+    def fq(self, fq):
+        return self._get_query_set().fq(fq)
     
     def get(self, id):
-        return self._get_query_set().set('q', settings.DJANGOSOLR_ID_FIELD + ':' + str(id))
+        from djangosolr.documents import QRaw
+        pk = self._model._meta.pk
+        return self._get_query_set().q(QRaw('%s:%s-%s' % (settings.DJANGOSOLR_ID_FIELD, self._model._meta.type, pk.prepare(id),)))[0]
     
     def clear(self):
-        return self._request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': settings.DJANGOSOLR_TYPE_FIELD + ':' + self._model._meta.type}})
+        return self.request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': settings.DJANGOSOLR_TYPE_FIELD + ':' + self._model._meta.type}})
 
 def ensure_default_manager(cls):
     if not getattr(cls, '_default_manager', None):
-        cls.add_to_class('documents', Manager())
+        cls._add_to_class('documents', Manager())
         cls._base_manager = cls.documents
     elif not getattr(cls, '_base_manager', None):
         default_mgr = cls._default_manager.__class__

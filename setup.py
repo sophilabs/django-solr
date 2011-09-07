@@ -2,12 +2,14 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-solr',
-    version='0.0.1',
+    version='0.0.2',
     description='Django-Solr search',
     author='Sophilabs',
     author_email='contact@sophilabs.com',
-    url='http://github.com/sophilabs/django-solr/',
-    packages=find_packages(),
+    url='https://github.com/sophilabs/django-solr/',
+    download_url='https://github.com/sophilabs/django-solr/downloads/'
+    license='BSD'
+    packages=packages=find_packages(exclude=('example')),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',

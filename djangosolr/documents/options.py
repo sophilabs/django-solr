@@ -9,16 +9,20 @@ class Options(object):
         self.fields = []
         self.pk = None
         
+    def get_field(self, name):
+        for field in self.fields:
+            if field.name == name:
+                return field
+        return None
+        
     def add_field(self, field):
         self.fields.append(field)
         if field.primary_key:
             self.pk = field
     
-    def contribute_to_class(self, cls, name):
+    def _contribute_to_class(self, cls, name):
         cls._meta = self
-        
         self.name = cls.__name__.lower()
-        
         if self.meta:
             meta_attrs = self.meta.__dict__.copy()
             for name in self.meta.__dict__:
@@ -32,13 +36,11 @@ class Options(object):
             
             if meta_attrs != {}:
                 raise TypeError("'class Meta' got invalid attribute(s): %s" % ','.join(meta_attrs.keys()))
-        
         if not self.type:
             self.type = self.name
-        
         del self.meta
     
-    def _prepare(self, model):
+    def _prepare_class(self, model):
         from django.conf import settings
         mapping = settings.DJANGOSOLR_FIELD_MAPPING
         if model._meta.model:
@@ -47,4 +49,4 @@ class Options(object):
                 sc = df.__class__.__module__ + '.' + df.__class__.__name__
                 f_module, f_classname = mapping[sc].rsplit('.', 1)
                 f = getattr(import_module(f_module), f_classname)(**kwargs) 
-                model.add_to_class(f.name, f)
+                model._add_to_class(f.name, f)

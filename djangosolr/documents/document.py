@@ -13,28 +13,28 @@ class DocumentBase(type):
             meta = getattr(new_class, 'Meta', None)
         else:
             meta = attr_meta
-        new_class.add_to_class('_meta', Options(meta))
+        new_class._add_to_class('_meta', Options(meta))
 
         if getattr(new_class, '_default_manager', None):
             new_class._default_manager = None
             new_class._base_manager = None
 
         for obj_name, obj in attrs.items():
-            new_class.add_to_class(obj_name, obj)
+            new_class._add_to_class(obj_name, obj)
 
-        new_class._prepare()
+        new_class._prepare_class()
         
         return new_class
     
-    def add_to_class(cls, name, value):
-        if hasattr(value, 'contribute_to_class'):
-            value.contribute_to_class(cls, name)
+    def _add_to_class(cls, name, value):
+        if hasattr(value, '_contribute_to_class'):
+            value._contribute_to_class(cls, name)
         else:
             setattr(cls, name, value)
     
-    def _prepare(cls):
+    def _prepare_class(cls):
         opts = cls._meta
-        opts._prepare(cls)
+        opts._prepare_class(cls)
         ensure_default_manager(cls)
 
 class Document(object):
@@ -73,9 +73,9 @@ class Document(object):
                 doc[type + '-' + field.name] = [] #BUG: https://issues.apache.org/jira/browse/SOLR-2714
             else:    
                 doc[type + '-' + field.name] = value 
-        return self._default_manager._request('POST', settings.DJANGOSOLR_UPDATE_PATH, [('commit', 'true',)], { 'add': { 'overwrite': True, 'doc': doc}, 'commit': {} })
+        return self._default_manager.request('POST', settings.DJANGOSOLR_UPDATE_PATH, [('commit', 'true',)], { 'add': { 'overwrite': True, 'doc': doc}, 'commit': {} })
     
     def delete(self):
         id = getattr(self, self._meta.pk.name)
         type = self._meta.type
-        return self._default_manager._request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': settings.DJANGOSOLR_ID_FIELD + ':' + type + '-' + str(id)}, 'commit': {} })
+        return self._default_manager.request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': settings.DJANGOSOLR_ID_FIELD + ':' + type + '-' + str(id)}, 'commit': {} })

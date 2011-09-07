@@ -8,4 +8,3 @@ class MovieDocument(Document):
     class Meta:
         model = Movie
         type = 'movie'
-        #default_search_field = 'text'

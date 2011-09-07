@@ -16,13 +16,13 @@
     
     Search:
     <code>
-        MovieDocument.documents.query(Q('jurassic park') & Q('director', 'spielberg'))[:10]
+        MovieDocument.documents.q(Q('jurassic park') & Q('director', 'spielberg'))[:10]
     </code>
     
     *Solr Not Included
 """
 
-__version__ = (0, 0, 1)
+__version__ = (0, 0, 2)
 
 from djangosolr.conf import inject_defaults
 inject_defaults()

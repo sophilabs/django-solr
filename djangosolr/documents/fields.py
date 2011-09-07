@@ -10,7 +10,7 @@ class Field():
         self.multivalued = multivalued
         self.primary_key = primary_key
         
-    def contribute_to_class(self, cls, name):
+    def _contribute_to_class(self, cls, name):
         self.name = name
         self._model = cls
         cls._meta.add_field(self)
