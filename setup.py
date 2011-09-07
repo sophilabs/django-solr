@@ -9,7 +9,7 @@ setup(
     url='https://github.com/sophilabs/django-solr',
     download_url='https://github.com/sophilabs/django-solr/downloads',
     license='BSD',
-    packages=packages=find_packages(exclude=('example')),
+    packages=find_packages(exclude=('example')),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
