@@ -21,6 +21,11 @@ Get the first 10 spielberg's movies::
 
  ms = MovieDocument.documents.q(Q('text', 'spielberg'))[:10]
 
+Delete a movie::
+
+ m = MovieDocument.documents.get(1)
+ m.delete()
+
 Delete all movies::
 
  MovieDocument.documents.clear()
@@ -34,4 +39,9 @@ You can get Django Solr by using pip or easy_install::
  or
  $ easy_install django-solr
 
+Comming Soon
+============
+
+* Facet
+* More Like This
 
