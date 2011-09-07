@@ -2,6 +2,7 @@
 Solr Search Engine ORM for Django
 =================================
 ::
+
  #Delete all movies
  MovieDocument.documents.clear()
  
@@ -23,6 +24,7 @@ Solr Search Engine ORM for Django
 Installation
 ============
 ::
- easy_install django-solr
+
+ $ easy_install django-solr
 
 
