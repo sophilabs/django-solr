@@ -1,5 +1,5 @@
 """
-    Solr Search Engine ORM for Django models*
+    Solr Search Engine ORM for Django
     
     Create, save, fetch, update and delete:
     <code>
@@ -22,7 +22,7 @@
     *Solr Not Included
 """
 
-__version__ = (0, 0, 2)
+__version__ = (1, 0, 0)
 
 from djangosolr.conf import inject_defaults
 inject_defaults()
