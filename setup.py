@@ -7,7 +7,7 @@ setup(
     author='Sophilabs',
     author_email='contact@sophilabs.com',
     url='https://github.com/sophilabs/django-solr',
-    download_url='https://github.com/sophilabs/django-solr/downloads',
+    download_url='http://github.com/sophilabs/django-solr/tarball/0.0.2#egg=django-solr-0.0.2',
     license='BSD',
     packages=find_packages(exclude=('example')),
     classifiers=[
