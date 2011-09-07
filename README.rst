@@ -1,7 +1,8 @@
 =================================
 Solr Search Engine ORM for Django
 =================================
-::
+
+Examples::
 
  #Delete all movies
  MovieDocument.documents.clear()
@@ -21,10 +22,13 @@ Solr Search Engine ORM for Django
  #Get the first 10 spielberg's movies
  ms = MovieDocument.documents.q(Q('text', 'spielberg'))[:10]
 
-Installation
-============
-::
-
+Getting It
+==========
+ 
+You can get Django Solr by using pip or easy_install::
+ 
+ $ pip install django-solr
+ or
  $ easy_install django-solr
 
 
