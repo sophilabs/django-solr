@@ -3,7 +3,7 @@
     
     Create, save, fetch, update and delete:
     <code>
-        mv = MovieDocument(title='Jurassic Park', director='Steven Spielberg')
+        mv = MovieDocument    (title='Jurassic Park', director='Steven Spielberg')
         mv.save()
         
         mv = MovieDocument.docuemnts.get(1)

@@ -9,14 +9,17 @@ from djangosolr.documents import Q
 #Delete all movies
 MovieDocument.documents.clear()
 
-#Save movie
+#Save some movies
 MovieDocument(id="1", title='Jurassic Park I', director='Steven Spielberg').save()
-MovieDocument(id="2", title='Jurassic Park III', director='Joe Johnston').save()
+MovieDocument(id="2", title='Jurassic Park III', director='Steven Spielberg').save()
 
-#Get by id
-m = MovieDocument.documents.get(1)
+#Get and update a movie by id
+m = MovieDocument.documents.get(2)
+m.director = 'Joe Johnston'
+m.save()
 
 #Get all movies
-r = MovieDocument.documents.all().q(Q('text', 'steven') | Q('text', 'joe'))
-for m in r:
-    print m.id, m.title
+ms = MovieDocument.documents.all()
+
+#Get the first 10 spielberg's movies
+ms = MovieDocument.documents.q(Q('text', 'spielberg'))[:10]
