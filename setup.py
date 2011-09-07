@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='django-solr',
     version='0.0.2',
-    description='Django-Solr search',
+    description='Solr Search Engine ORM for Django',
     author='Sophilabs',
     author_email='contact@sophilabs.com',
     url='https://github.com/sophilabs/django-solr',
