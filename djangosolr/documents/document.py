@@ -1,6 +1,7 @@
 from djangosolr.documents.options import Options
 from djangosolr.documents.manager import ensure_default_manager
 from django.conf import settings
+from djangosolr.documents.util import escape
 
 class DocumentBase(type):
     
@@ -55,7 +56,7 @@ class Document(object):
         document = cls()
         if isinstance(om, dict):
             for field in cls._meta.fields:
-                name = cls._meta.type + '-' + field.name
+                name = cls._meta.get_solr_field_name(field)
                 if om.has_key(name):
                     setattr(document, field.name, field.convert(om[name]))
         else:
@@ -64,18 +65,17 @@ class Document(object):
         return document
     
     def save(self):
-        id = getattr(self, self._meta.pk.name)
-        type = self._meta.type
-        doc = {settings.DJANGOSOLR_ID_FIELD: type + '-' + str(id), settings.DJANGOSOLR_TYPE_FIELD: type}
+        m = self._meta
+        doc = { m.get_solr_id_field(): m.get_solr_id_value(self),
+                m.get_solr_type_field(): m.get_solr_type_value()}
         for field in self._meta.fields:
             value = field.prepare(getattr(self, field.name))
             if value is None:
-                doc[type + '-' + field.name] = [] #BUG: https://issues.apache.org/jira/browse/SOLR-2714
+                doc[m.get_solr_field_name(field)] = [] #BUG: https://issues.apache.org/jira/browse/SOLR-2714
             else:    
-                doc[type + '-' + field.name] = value 
+                doc[m.get_solr_field_name(field)] = value 
         return self._default_manager.request('POST', settings.DJANGOSOLR_UPDATE_PATH, [('commit', 'true',)], { 'add': { 'overwrite': True, 'doc': doc}, 'commit': {} })
     
     def delete(self):
-        id = getattr(self, self._meta.pk.name)
-        type = self._meta.type
-        return self._default_manager.request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': settings.DJANGOSOLR_ID_FIELD + ':' + type + '-' + str(id)}, 'commit': {} })
+        m = self._meta
+        return self._default_manager.request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': u'%s:%s' % (m.get_solr_id_field(), escape(m.get_solr_id_value(self)),)}, 'commit': {} })

@@ -1,5 +1,6 @@
 from django.utils.importlib import import_module
 from djangosolr.documents.util import escape
+from django.conf import settings
 
 class Options(object):
     
@@ -14,10 +15,25 @@ class Options(object):
         for field in self.fields:
             if field.name == name:
                 return field
-        return None
+        raise IndexError(name)
     
-    def get_field_name(self, name):
-        return escape('%s-%s' % (self.type, self.get_field(name).name,))
+    def get_solr_field_name(self, field):
+        if isinstance(field, basestring):
+            field = self.get_field(field)
+        return escape(u'%s__%s' % (self.type, field.name,))
+    
+    def get_solr_id_field(self):
+        return settings.DJANGOSOLR_ID_FIELD
+    
+    def get_solr_id_value(self, document):
+        return u'%s-%s' % (self.type, self.pk.prepare(getattr(document, self.pk.name)),)
+        
+    def get_solr_type_field(self):
+        return settings.DJANGOSOLR_TYPE_FIELD
+        
+    def get_solr_type_value(self):
+        return self.type
+        
         
     def add_field(self, field):
         self.fields.append(field)

@@ -61,10 +61,10 @@
     <field name="id" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
     <field name="type" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
 
-    <field name="movie-id" type="int" indexed="true" stored="true" multiValued="false" />
-    <field name="movie-title" type="string" indexed="true" stored="true" multiValued="false" />
-    <field name="movie-director" type="string" indexed="true" stored="true" multiValued="false" />
-    <field name="movie-text" type="string" indexed="true" stored="true" multiValued="true" />
+    <field name="movie__id" type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="movie__title" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="movie__director" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="movie__text" type="string" indexed="true" stored="false" multiValued="true" />
    
   </fields>
 
@@ -73,7 +73,7 @@
 
   <solrQueryParser defaultOperator="AND"/>
 
-  <copyField source="movie-title" dest="movie-text" />
-  <copyField source="movie-director" dest="movie-text" />
+  <copyField source="movie__title" dest="movie__text" />
+  <copyField source="movie__director" dest="movie__text" />
 
 </schema>

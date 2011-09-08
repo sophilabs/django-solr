@@ -1,84 +1,102 @@
 from django.conf import settings
-from djangosolr.documents.util import escape
+from django.utils import tree
+import re
 
-class QBase(object):
-    
-    def __init__(self):
-        pass
+FILTER_CONTAINS = u'%s:%s'
+FILTER_EXACT = u'%s:"%s"'
+FILTER_COMPARE = {
+    'gt': u'%s:{%s TO *}',
+    'gte': u'%s:[%s TO *]',
+    'lt': u'%s:{* TO %s}',
+    'lte': u'%s:[* TO %s]',
+}
 
-    def get_query(self, meta):
-        raise NotImplementedError
+FILTER_RANGE = {
+    'range': u'%s:[%s TO %s]',
+    'rangecc': u'%s:[%s TO %s]',
+    'rangeoc': u'%s:{%s TO %s]',
+    'rangeco': u'%s:[%s TO %s}',
+    'rangeoo': u'%s:{%s TO %s}'
+}
+WHITESPACE_RE = re.compile(r'\s+')
+
+class Q(tree.Node):
     
+    AND = 'AND'
+    OR = 'OR'
+    default = AND
+
+    def __init__(self, *args, **kwargs):
+        super(Q, self).__init__(children=list(args) + kwargs.items())
+
+    def _combine(self, other, conn):
+        if not isinstance(other, Q):
+            raise TypeError(other)
+        obj = Q()
+        obj.add(self, conn)
+        obj.add(other, conn)
+        return obj
+
     def __or__(self, other):
-        return QOr(self, other)
+        return self._combine(other, self.OR)
 
     def __and__(self, other):
-        return QAnd(self, other)
+        return self._combine(other, self.AND)
 
     def __invert__(self):
-        return QNot(self)
-
-class Q(QBase):
-
-    def __init__(self, name, value):
-        super(Q, self).__init__()
-        self.name = name
-        self.value = value
-    
-    def get_query(self, meta):
-        field = meta.get_field(self.name)
-        return '(%s-%s:%s)' % (meta.type, field.name, escape(unicode(field.prepare(self.value))),)
-    
-class QRaw(QBase):
-    
-    def __init__(self, raw):
-        self.raw = raw
+        obj = Q()
+        obj.add(self, self.AND)
+        obj.negate()
         
-    def get_query(self, meta):
-        return self.raw
+    def get_query_string(self, meta):
+        query = []
+        for child in self.children:
+            if isinstance(child, basestring):
+                query.append(child)
+            elif hasattr(child, 'get_query_string'):
+                query.append(child.get_query_string(meta))
+            else:                
+                filter, value = child
+                fn, _, ft = filter.partition('__')
+                f = meta.get_field(fn)
+                fn = meta.get_solr_field_name(fn)
+                if not ft or ft == 'contains':
+                    if isinstance(value, basestring):
+                        queryt = []
+                        for value in WHITESPACE_RE.split(value):
+                            queryt.append(FILTER_CONTAINS % (fn, f.prepare(value),))
+                        s = u' AND '.join(queryt)
+                        if len(queryt) > 1:
+                            s = u'(%s)' (s,)
+                        query.append(s)
+                    else:
+                        query.append(FILTER_CONTAINS % (fn, f.prepare(value),))
+                elif ft == 'exact':
+                    query.append(FILTER_EXACT % (fn, f.prepare(value),))
+                elif ft in FILTER_COMPARE:
+                    value = u'"%s"' % (f.prepare(value),) if isinstance(value, basestring) else f.prepare(value)  
+                    query.append(FILTER_COMPARE[ft] % (ft, value,))
+                elif ft in FILTER_RANGE:
+                    value1, value2 = value
+                    value1 = u'"%s"' % (f.prepare(value1),) if isinstance(value1, basestring) else f.prepare(value1)
+                    value2 = u'"%s"' % (f.prepare(value2),) if isinstance(value2, basestring) else f.prepare(value2)
+                    query.append(FILTER_RANGE[ft] % (fn, value1, value2,))
+                elif ft == 'in':
+                    query.append(u'(%s)' % (' OR '.join([u'%s:%s' % (fn, f.prepare(v),) for v in value]),))                
+                else:
+                    raise NotImplementedError
+        s = (u' %s ' % (self.connector,)).join(query)
+        if self.negated:
+            s = u'NOT (%s)' % (s,)
+        elif len(self.children) > 1:
+            s = u'(%s)' % (s,)
+        return s
     
-class QRange(QBase):
-    
-    def __init__(self, name=None, start=None, end=None):
-        super(Q, self).__init__()
-        self.name = name
-        self.start = start
-        self.end = end
-        
-    def get_query(self, meta):
-        raise NotImplementedError
-
-class QAnd(object):
-    
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-        
-    def get_query(self, meta):
-        return '(%s AND %s)' % (self.a.get_query(meta), self.b.get_query(meta),)
-    
-class QOr():
-    
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-        
-    def get_query(self, meta):
-        return '(%s OR %s)' % (self.a.get_query(meta), self.b.get_query(meta),)
-    
-class QNot(object):
-    
-    def __init__(self, a):
-        self.a = a
-        
-    def get_query(self, meta):
-        return '-(%s)' % (self.a.get_query(meta),)
-
 class Query(object):
     
     def __init__(self):
-        self._q = None
-        self._fq = None
+        self._q = Q()
+        self._fq = Q()
         self._sort = []
         self._params = {}
         
@@ -90,17 +108,17 @@ class Query(object):
         clone._params.update(self._params)
         return clone
     
-    def q(self, q):
-        if self._q:
-            self._q = QAnd(self._q, q)
-        else:
-            self._q = q
-            
-    def fq(self, fq):
-        if self._fq:
-            self._fq = QAnd(self._q, fq)
-        else:
-            self._fq = fq 
+    def q(self, *qs, **filters):
+        for q in qs:
+            self._q &= q
+        if filters:
+            self._q &= Q(**filters)
+               
+    def fq(self, *qs, **filters):
+        for q in qs:
+            self._fq &= q
+        if filters:
+            self._fq &= Q(**filters) 
     
     def sort(self, *fields):
         self._sort.extend(fields)
@@ -118,23 +136,28 @@ class Query(object):
         elif 'rows' in self._params:
             del self._params['rows']
             
-    def get_query(self, meta):
+    def get_query_string(self, meta):
         query = []
+        #raw params
         for k, v in self._params.items():
             query.append((k, v,))
-        q = QRaw('*:*')
-        if self._q:
-            q = self._q
-        query.append(('q', q.get_query(meta)))        
-        fq = QRaw('%s:%s' % (settings.DJANGOSOLR_TYPE_FIELD, meta.type,))
-        if self._fq:
-            fq = QAnd(self._fq, fq)
-        query.append(('fq', fq.get_query(meta)))
+
+        #q
+        if not self._q:
+            self._q = Q('*:*')
+        query.append(('q', self._q.get_query_string(meta),))
+        
+        #fq        
+        self._fq &= Q('%s:%s' % (meta.get_solr_type_field(), meta.get_solr_type_value(),))
+        query.append(('fq', self._fq.get_query_string(meta),))
+
+        #sort
         if self._sort:
-            sort = ','.join(['%s desc' % (meta.get_field_name(field),) if field.startswith('-')
-                             else '%s asc' % (meta.get_field_name(field),)
+            sort = ','.join(['%s desc' % (meta.get_solr_field_name(field[1:]),) if field.startswith('-')
+                             else '%s asc' % (meta.get_solr_field_name(field),)
                              for field in self._sort])
             query.append(('sort', sort,))
+        
         return query
 
 class QuerySet(object):
@@ -149,7 +172,7 @@ class QuerySet(object):
         
     def _get_response(self):
         if self._response is None:
-            self._response = self._model._default_manager.request('GET', settings.DJANGOSOLR_SELECT_PATH, self._query.get_query(self._model._meta))
+            self._response = self._model._default_manager.request('GET', settings.DJANGOSOLR_SELECT_PATH, self._query.get_query_string(self._model._meta))
         return self._response
     response = property(_get_response) 
     
@@ -261,17 +284,12 @@ class QuerySet(object):
         clone._query.raw(**kwargs)
         return clone
     
-    def search(self, name, value):
+    def q(self, *qs, **filters):
         clone =  self._clone()
-        clone._query.q(Q(name, value))
+        clone._query.q(*qs, **filters)
         return clone
     
-    def q(self, q):
+    def fq(self, *qs, **filters):
         clone =  self._clone()
-        clone._query.q(q)
-        return clone
-    
-    def fq(self, fq):
-        clone =  self._clone()
-        clone._query.fq(fq)
+        clone._query.fq(*qs, **filters)
         return clone

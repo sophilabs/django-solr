@@ -1,6 +1,7 @@
-import urllib, httplib2, json
+import httplib2, json
 from djangosolr.documents.queryset import QuerySet
 from django.conf import settings
+from djangosolr.documents.util import urlencode
 
 class ManagerDescriptor(object):
     
@@ -24,7 +25,7 @@ class Manager(object):
         try:
             uri = '%s%s?wt=json' % (settings.DJANGOSOLR_URL, path,)
             if query:
-                uri += '&' + urllib.urlencode(query)
+                uri += '&' + urlencode(query)
             if body:
                 body = json.dumps(body)
             headers, body = httplib2.Http().request(uri=uri, method=method, body=body, headers={'Content-type': 'application/json'})
@@ -39,20 +40,20 @@ class Manager(object):
     
     def all(self):
         return self._get_query_set()
-
-    def search(self, name, value):
-        return self._get_query_set().search(name, value)
     
-    def q(self, q):
-        return self._get_query_set().q(q)
+    def raw(self, **kwargs):
+        return self._get_query_set().raw(**kwargs)
     
-    def fq(self, fq):
-        return self._get_query_set().fq(fq)
+    def q(self, *qs, **filters):
+        return self._get_query_set().q(*qs, **filters)
+    
+    def fq(self, *qs, **filters):
+        return self._get_query_set().fq(*qs, **filters)
     
     def get(self, id):
-        from djangosolr.documents import QRaw
+        from djangosolr.documents import Q
         pk = self._model._meta.pk
-        return self._get_query_set().q(QRaw('%s:%s-%s' % (settings.DJANGOSOLR_ID_FIELD, self._model._meta.type, pk.prepare(id),)))[0]
+        return self._get_query_set().q(Q('%s:%s-%s' % (settings.DJANGOSOLR_ID_FIELD, self._model._meta.type, pk.prepare(id),)))[0]
     
     def clear(self):
         return self.request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': settings.DJANGOSOLR_TYPE_FIELD + ':' + self._model._meta.type}})

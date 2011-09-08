@@ -1,4 +1,5 @@
 import datetime, decimal
+from django.utils.encoding import force_unicode
 
 class Field():
     
@@ -35,6 +36,9 @@ class CharField(Field):
     def __init__(self, **kwargs):
         kwargs.setdefault('type', 'string')
         Field.__init__(self, **kwargs)
+        
+    def prepare(self, value):
+        return force_unicode(value)
 
 class DateTimeField(Field):
     
@@ -49,7 +53,7 @@ class DateTimeField(Field):
         try:
             return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
         except ValueError:
-            return datetime.datetime.strptime(value, '%Y-%m-%d').date()
+            return datetime.datetime.strptime(value, '%Y-%m-%dT00:00:00Z').date()
     
 class FloatField(Field):
     

@@ -1,10 +1,10 @@
-from example.movies.models import Movie
+from example.movies.models import Movie as MovieDB
 from djangosolr.documents import Document, TextField
 
-class MovieDocument(Document):
+class Movie(Document):
     
-    text = TextField()
+    text = TextField(stored=False)
     
     class Meta:
-        model = Movie
+        model = MovieDB
         type = 'movie'
