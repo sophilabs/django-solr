@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-solr',
-    version='1.0.0alpha2',
+    version='1.0.0alpha3',
     description='Solr Search Engine ORM for Django',
     author='Sophilabs',
     author_email='contact@sophilabs.com',
     url='https://github.com/sophilabs/django-solr',
-    download_url='http://github.com/sophilabs/django-solr/tarball/v1.0.0alpha2#egg=django-solr-1.0.0alpha2',
+    download_url='http://github.com/sophilabs/django-solr/tarball/v1.0.0alpha3#egg=django-solr-1.0.0alpha3',
     license='BSD',
     packages=find_packages(exclude=('example')),
     classifiers=[
