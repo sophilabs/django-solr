@@ -9,7 +9,9 @@ setup(
     url='https://github.com/sophilabs/django-solr',
     download_url='http://github.com/sophilabs/django-solr/tarball/v1.0.0alpha3#egg=django-solr-1.0.0alpha3',
     license='BSD',
-    packages=find_packages(exclude=('example')),
+    packages=[
+        'djangosolr',
+    ],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
@@ -19,6 +21,4 @@ setup(
         'Programming Language :: Python',
         'Framework :: Django',
     ],
-    include_package_data=True,
-    zip_safe=False,
 )
