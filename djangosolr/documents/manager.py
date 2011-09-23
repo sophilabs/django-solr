@@ -1,7 +1,7 @@
-import httplib2, json
 from djangosolr.documents.queryset import QuerySet
+from djangosolr.documents.query import Q
 from django.conf import settings
-from djangosolr.documents.util import urlencode
+from djangosolr import solr
 
 class ManagerDescriptor(object):
     
@@ -20,20 +20,6 @@ class Manager(object):
         setattr(model, name, ManagerDescriptor(self))
         if not getattr(model, '_default_manager', None):
             model._default_manager = self
-            
-    def request(self, method, path, query=None, body=None):
-        try:
-            uri = '%s%s?wt=json' % (settings.DJANGOSOLR_URL, path,)
-            if query:
-                uri += '&' + urlencode(query)
-            if body:
-                body = json.dumps(body)
-            headers, body = httplib2.Http().request(uri=uri, method=method, body=body, headers={'Content-type': 'application/json'})
-            if headers['status'] == '200':
-                return json.loads(body)
-            raise Exception(body)
-        except:
-            raise
     
     def _get_query_set(self):
         return QuerySet(self._model)
@@ -50,13 +36,18 @@ class Manager(object):
     def fq(self, *qs, **filters):
         return self._get_query_set().fq(*qs, **filters)
     
+    def fl(self, *fields):
+        return self._get_query_set().fl(*fields)
+    
+    def sort(self, *fields):
+        return self._get_query_set().sort(*fields)
+    
     def get(self, id):
-        from djangosolr.documents import Q
         pk = self._model._meta.pk
         return self._get_query_set().q(Q('%s:%s-%s' % (settings.DJANGOSOLR_ID_FIELD, self._model._meta.type, pk.prepare(id),)))[0]
     
     def clear(self):
-        return self.request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': settings.DJANGOSOLR_TYPE_FIELD + ':' + self._model._meta.type}})
+        return solr.clear(self._model)
 
 def ensure_default_manager(cls):
     if not getattr(cls, '_default_manager', None):

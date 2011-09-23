@@ -61,7 +61,6 @@ class Options(object):
         del self.meta
     
     def _prepare_class(self, model):
-        from django.conf import settings
         mapping = settings.DJANGOSOLR_FIELD_MAPPING
         if model._meta.model:
             for df in model._meta.model._meta.local_fields:

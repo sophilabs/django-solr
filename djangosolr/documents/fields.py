@@ -25,6 +25,9 @@ class Field():
     def convert(self, value):
         return value
     
+class BooleanField(Field):
+    pass
+    
 class IntegerField(Field):
     
     def __init__(self, **kwargs):
@@ -38,7 +41,10 @@ class CharField(Field):
         Field.__init__(self, **kwargs)
         
     def prepare(self, value):
-        return force_unicode(value)
+        if hasattr(value, '__iter__'):
+            return [force_unicode(v) for v in value]
+        else:
+            return force_unicode(value)
 
 class DateTimeField(Field):
     
@@ -47,7 +53,10 @@ class DateTimeField(Field):
         Field.__init__(self, **kwargs)
     
     def prepare(self, value):
-        return value.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        if hasattr(value, '__iter__'):
+            return [v.strftime('%Y-%m-%dT%H:%M:%S.%fZ') for v in value]
+        else:
+            return value.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     
     def convert(self, value):
         try:
@@ -74,7 +83,11 @@ class DecimalField(Field):
         Field.__init__(self, **kwargs)
 
     def prepare(self, value):
-        return float(value)
+        if value is None:
+            return value
+        else:
+            return float(str(value))
+        
     
     def convert(self, value):
         return decimal.Decimal(value)

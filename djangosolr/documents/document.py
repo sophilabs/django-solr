@@ -1,7 +1,6 @@
 from djangosolr.documents.options import Options
 from djangosolr.documents.manager import ensure_default_manager
-from django.conf import settings
-from djangosolr.documents.util import escape
+from djangosolr import solr
 
 class DocumentBase(type):
     
@@ -61,21 +60,12 @@ class Document(object):
                     setattr(document, field.name, field.convert(om[name]))
         else:
             for field in cls._meta.fields:
-                setattr(document, field.name, getattr(om, field.name))
+                if hasattr(om, field.name):
+                    setattr(document, field.name, getattr(om, field.name))
         return document
     
     def save(self):
-        m = self._meta
-        doc = { m.get_solr_id_field(): m.get_solr_id_value(self),
-                m.get_solr_type_field(): m.get_solr_type_value()}
-        for field in self._meta.fields:
-            value = field.prepare(getattr(self, field.name))
-            if value is None:
-                doc[m.get_solr_field_name(field)] = [] #BUG: https://issues.apache.org/jira/browse/SOLR-2714
-            else:    
-                doc[m.get_solr_field_name(field)] = value 
-        return self._default_manager.request('POST', settings.DJANGOSOLR_UPDATE_PATH, [('commit', 'true',)], { 'add': { 'overwrite': True, 'doc': doc}, 'commit': {} })
+        return solr.save([self])
     
     def delete(self):
-        m = self._meta
-        return self._default_manager.request('POST', settings.DJANGOSOLR_DELETE_PATH, None, {'delete': { 'query': u'%s:%s' % (m.get_solr_id_field(), escape(m.get_solr_id_value(self)),)}, 'commit': {} })
+        return solr.delete([self])

@@ -6,7 +6,7 @@ Define::
 
  from djangosolr import documents
  
- class Movie(Document):
+ class Movie(documents.Document):
      id = documents.IntegerField(primary_key=True)
      title = documents.CharField()
      director = documents.CharField()
