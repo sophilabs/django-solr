@@ -10,8 +10,8 @@ def escape(value):
 def urlencode(query):
     l = []
     for k, v in query:
-        k = urllib.quote(str(k))
-        v = urllib.quote(str(v))
+        k = urllib.quote(unicode(k).encode('utf8'))
+        v = urllib.quote(unicode(v).encode('utf8'))
         l.append(k + '=' + v)
     return '&'.join(l)
 
@@ -36,6 +36,7 @@ def save(docs, commit=True, overwrite=True):
     ddocs = []
     for doc in docs:
         m = doc._meta
+        doc.pre_save()
         ddoc = { m.get_solr_id_field(): m.get_solr_id_value(doc),
                  m.get_solr_type_field(): m.get_solr_type_value()}
         for field in doc._meta.fields:
@@ -51,6 +52,7 @@ def delete(docs, commit=True):
     queries = []
     for doc in docs:
         m = doc._meta
+        doc.pre_delete()
         queries.append(u'%s:%s' % (m.get_solr_id_field(), escape(m.get_solr_id_value(doc)))) 
     return request('POST', settings.DJANGOSOLR_DELETE_PATH, [('commit', str(commit).lower(),)], {'delete': { 'query': ' OR '.join(queries) }})
 

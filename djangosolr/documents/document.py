@@ -66,6 +66,12 @@ class Document(object):
     
     def save(self):
         return solr.save([self])
+
+    def pre_save(self):
+        pass
     
     def delete(self):
         return solr.delete([self])
+
+    def pre_delete(self):
+        pass
