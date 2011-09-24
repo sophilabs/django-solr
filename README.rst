@@ -12,10 +12,26 @@ Define::
      director = documents.CharField()
      text = TextField()
 
+Define from an existing django model::
+  
+ from djangosolr import documents
+ from myapp import models
+
+ class Movie(documents.Document):
+     class Meta:
+         model = models.Movie
+     
+
 Save some movies::
 
  Movie(id="1", title='Jurassic Park I', director='Steven Spielberg').save()
  Movie(id="2", title='Jurassic Park III', director='Steven Spielberg').save()
+
+Save many movies at once::
+  
+ from djangosolr import solr
+
+ solr.save([m1, m2])
  
 Get and update::
 
@@ -30,9 +46,6 @@ Get all movies::
 Get the first 10 Steven Spielberg's movies::
 
  ms = Movie.documents.q(director__exact='Steven Spielberg').sort('title')[:10]
- print ms.count()
- for m in ms:
-     print m.title
 
 Get Spielberg's or Johnston's movies::
 
