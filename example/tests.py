@@ -11,7 +11,7 @@ Movie(id="2", title='Jurassic Park III', director='Steven Spielberg').save()
  
 #Get and update
 m = Movie.documents.get(2)
-m.director = 'Joe Johnston'
+m.director = None
 m.save()
  
 #Get all movies

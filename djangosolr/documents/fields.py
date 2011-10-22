@@ -41,8 +41,10 @@ class CharField(Field):
         Field.__init__(self, **kwargs)
         
     def prepare(self, value):
-        if hasattr(value, '__iter__'):
-            return [force_unicode(v) for v in value]
+        if value is None:
+            return None
+        elif hasattr(value, '__iter__'):
+            return [self.prepare(v) for v in value]
         else:
             return force_unicode(value)
 
@@ -53,8 +55,10 @@ class DateTimeField(Field):
         Field.__init__(self, **kwargs)
     
     def prepare(self, value):
+        if value is None:
+            return None
         if hasattr(value, '__iter__'):
-            return [v.strftime('%Y-%m-%dT%H:%M:%S.%fZ') for v in value]
+            return [self.prepare(v) for v in value]
         else:
             return value.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     
@@ -85,9 +89,10 @@ class DecimalField(Field):
     def prepare(self, value):
         if value is None:
             return value
+        elif hasattr(value, '__iter__'):
+            return [self.prepare(v) for v in value]
         else:
             return float(str(value))
-        
     
     def convert(self, value):
         return decimal.Decimal(value)
