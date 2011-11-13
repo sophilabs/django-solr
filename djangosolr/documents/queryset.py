@@ -22,7 +22,7 @@ class QuerySet(object):
             response = solr.select(query.get_query_string(self._model._meta))
             start += rows
             self._responses.append(response)
-            self._responses_more = len(response['response']['docs']) == rows
+            self._responses_more = self._query._start is None and self._query._rows is None and len(response['response']['docs']) == rows
             yield response
     
     def _get_response(self):
