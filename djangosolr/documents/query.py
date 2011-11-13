@@ -73,7 +73,7 @@ class Q(tree.Node):
                     query.append(FILTER_EXACT % (fn, f.prepare(value),))
                 elif ft in FILTER_COMPARE:
                     value = u'"%s"' % (f.prepare(value),) if isinstance(value, basestring) else f.prepare(value)  
-                    query.append(FILTER_COMPARE[ft] % (ft, value,))
+                    query.append(FILTER_COMPARE[ft] % (fn, value,))
                 elif ft in FILTER_RANGE:
                     value1, value2 = value
                     value1 = u'"%s"' % (f.prepare(value1),) if isinstance(value1, basestring) else f.prepare(value1)
