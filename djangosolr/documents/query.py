@@ -65,7 +65,7 @@ class Q(tree.Node):
                             queryt.append(FILTER_CONTAINS % (fn, f.prepare(value),))
                         s = u' AND '.join(queryt)
                         if len(queryt) > 1:
-                            s = u'(%s)' (s,)
+                            s = u'(%s)' % (s,)
                         query.append(s)
                     else:
                         query.append(FILTER_CONTAINS % (fn, f.prepare(value),))
