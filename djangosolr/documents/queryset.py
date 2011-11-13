@@ -15,7 +15,7 @@ class QuerySet(object):
         for response in self._responses:
             yield response
         rows = 10 if self._query._rows is None else self._query._rows
-        start = len(self._responses) * rows
+        start = len(self._responses) * rows if self._query._start is None else self._query._start
         while self._responses_more:
             query = self._query.clone()
             query.set_limits(start, start + rows)
