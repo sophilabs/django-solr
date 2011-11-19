@@ -1,5 +1,5 @@
 from django.utils.importlib import import_module
-from djangosolr.documents.util import escape
+from djangosolr.solr import escape
 from django.conf import settings
 
 class Options(object):

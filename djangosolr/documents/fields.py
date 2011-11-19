@@ -1,5 +1,6 @@
 import datetime, decimal
 from django.utils.encoding import force_unicode
+from djangosolr.solr import escape
 
 class Field():
     
@@ -24,6 +25,13 @@ class Field():
     
     def convert(self, value):
         return value
+
+    def prepare_to_query(self, value):
+        value = self.prepare(value)
+        if isinstance(value, basestring):
+            return escape(value)
+        else:
+            return escape(str(value))
     
 class BooleanField(Field):
     pass

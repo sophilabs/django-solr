@@ -62,25 +62,25 @@ class Q(tree.Node):
                     if isinstance(value, basestring):
                         queryt = []
                         for value in WHITESPACE_RE.split(value):
-                            queryt.append(FILTER_CONTAINS % (fn, f.prepare(value),))
+                            queryt.append(FILTER_CONTAINS % (fn, f.prepare_to_query(value),))
                         s = u' AND '.join(queryt)
                         if len(queryt) > 1:
                             s = u'(%s)' % (s,)
                         query.append(s)
                     else:
-                        query.append(FILTER_CONTAINS % (fn, f.prepare(value),))
+                        query.append(FILTER_CONTAINS % (fn, f.prepare_to_query(value),))
                 elif ft == 'exact':
-                    query.append(FILTER_EXACT % (fn, f.prepare(value),))
+                    query.append(FILTER_EXACT % (fn, f.prepare_to_query(value),))
                 elif ft in FILTER_COMPARE:
-                    value = u'"%s"' % (f.prepare(value),) if isinstance(value, basestring) else f.prepare(value)  
+                    value = u'"%s"' % (f.prepare_to_query(value),) if isinstance(value, basestring) else f.prepare_to_query(value)
                     query.append(FILTER_COMPARE[ft] % (fn, value,))
                 elif ft in FILTER_RANGE:
                     value1, value2 = value
-                    value1 = u'"%s"' % (f.prepare(value1),) if isinstance(value1, basestring) else f.prepare(value1)
-                    value2 = u'"%s"' % (f.prepare(value2),) if isinstance(value2, basestring) else f.prepare(value2)
+                    value1 = u'"%s"' % (f.prepare_to_query(value1),) if isinstance(value1, basestring) else f.prepare_to_query(value1)
+                    value2 = u'"%s"' % (f.prepare_to_query(value2),) if isinstance(value2, basestring) else f.prepare_to_query(value2)
                     query.append(FILTER_RANGE[ft] % (fn, value1, value2,))
                 elif ft == 'in':
-                    query.append(u'(%s)' % (' OR '.join([u'%s:%s' % (fn, f.prepare(v),) for v in value]),))                
+                    query.append(u'(%s)' % (' OR '.join([u'%s:%s' % (fn, f.prepare_to_query(v),) for v in value]),))
                 else:
                     raise NotImplementedError
         s = (u' %s ' % (self.connector,)).join(query)
