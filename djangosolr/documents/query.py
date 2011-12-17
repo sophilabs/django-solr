@@ -1,20 +1,20 @@
 from django.utils import tree
 import re
 
-FILTER_CONTAINS = u'%s:%s'
-FILTER_EXACT = u'%s:"%s"'
+FILTER_CONTAINS = u'%(field)s:%(value)s'
+FILTER_EXACT = u'%(field)s:"%(value)s"'
 FILTER_COMPARE = {
-    'gt': u'%s:{%s TO *}',
-    'gte': u'%s:[%s TO *]',
-    'lt': u'%s:{* TO %s}',
-    'lte': u'%s:[* TO %s]',
+    'gt': u'%(field)s:{%(value)s TO *}',
+    'gte': u'%(field)s:[%(value)s TO *]',
+    'lt': u'%(field)s:{* TO %(value)s}',
+    'lte': u'%(field)s:[* TO %(value)s]',
 }
 FILTER_RANGE = {
-    'range': u'%s:[%s TO %s]',
-    'rangecc': u'%s:[%s TO %s]',
-    'rangeoc': u'%s:{%s TO %s]',
-    'rangeco': u'%s:[%s TO %s}',
-    'rangeoo': u'%s:{%s TO %s}'
+    'range':   u'%(field)s:[%(from)s TO %(to)s]',
+    'rangecc': u'%(field)s:[%(from)s TO %(to)s]',
+    'rangeoc': u'(%(field)s:{%(from)s TO *} AND %(field)s:[* TO %(to)s])',
+    'rangeco': u'(%(field)s:[%(from)s TO *] AND %(field)s:{* TO %(to)s})',
+    'rangeoo': u'%(field)s:{%(from)s TO %(to)s}'
 }
 WHITESPACE_RE = re.compile(r'\s+')
 
@@ -62,23 +62,23 @@ class Q(tree.Node):
                     if isinstance(value, basestring):
                         queryt = []
                         for value in WHITESPACE_RE.split(value):
-                            queryt.append(FILTER_CONTAINS % (fn, f.prepare_to_query(value),))
+                            queryt.append(FILTER_CONTAINS % {'field': fn, 'value': f.prepare_to_query(value)})
                         s = u' AND '.join(queryt)
                         if len(queryt) > 1:
                             s = u'(%s)' % (s,)
                         query.append(s)
                     else:
-                        query.append(FILTER_CONTAINS % (fn, f.prepare_to_query(value),))
+                        query.append(FILTER_CONTAINS % {'field':fn, 'value': f.prepare_to_query(value)})
                 elif ft == 'exact':
-                    query.append(FILTER_EXACT % (fn, f.prepare_to_query(value),))
+                    query.append(FILTER_EXACT % {'field': fn, 'value': f.prepare_to_query(value)})
                 elif ft in FILTER_COMPARE:
                     value = u'"%s"' % (f.prepare_to_query(value),) if isinstance(value, basestring) else f.prepare_to_query(value)
-                    query.append(FILTER_COMPARE[ft] % (fn, value,))
+                    query.append(FILTER_COMPARE[ft] % {'field': fn, 'value': value})
                 elif ft in FILTER_RANGE:
                     value1, value2 = value
                     value1 = u'"%s"' % (f.prepare_to_query(value1),) if isinstance(value1, basestring) else f.prepare_to_query(value1)
                     value2 = u'"%s"' % (f.prepare_to_query(value2),) if isinstance(value2, basestring) else f.prepare_to_query(value2)
-                    query.append(FILTER_RANGE[ft] % (fn, value1, value2,))
+                    query.append(FILTER_RANGE[ft] % {'field': fn, 'from': value1, 'to': value2})
                 elif ft == 'in':
                     query.append(u'(%s)' % (' OR '.join([u'%s:%s' % (fn, f.prepare_to_query(v),) for v in value]),))
                 else:
