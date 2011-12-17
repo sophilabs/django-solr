@@ -54,8 +54,8 @@ class Q(tree.Node):
             elif hasattr(child, 'get_query_string'):
                 query.append(child.get_query_string(meta))
             else:                
-                filter, value = child
-                fn, _, ft = filter.partition('__')
+                filterx, value = child
+                fn, _, ft = filterx.partition('__')
                 f = meta.get_field(fn)
                 fn = meta.get_solr_field_name(fn)
                 if not ft or ft == 'contains':
@@ -83,7 +83,7 @@ class Q(tree.Node):
                     query.append(u'(%s)' % (' OR '.join([u'%s:%s' % (fn, f.prepare_to_query(v),) for v in value]),))
                 else:
                     raise NotImplementedError
-        s = (u' %s ' % (self.connector,)).join(query)
+        s = (u' %s ' % (self.connector,)).join(filter(lambda y: y, query))
         if self.negated:
             s = u'NOT (%s)' % (s,)
         elif len(self.children) > 1:
