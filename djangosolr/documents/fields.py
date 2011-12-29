@@ -72,9 +72,12 @@ class DateTimeField(Field):
     
     def convert(self, value):
         try:
-            return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+            return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
         except ValueError:
-            return datetime.datetime.strptime(value, '%Y-%m-%dT00:00:00Z').date()
+            try:
+                return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+            except ValueError:
+                return datetime.datetime.strptime(value, '%Y-%m-%dT00:00:00Z').date()
     
 class FloatField(Field):
     
