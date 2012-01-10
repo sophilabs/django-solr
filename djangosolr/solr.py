@@ -48,13 +48,15 @@ def save(docs, commit=True, overwrite=True):
         ddocs.append(ddoc)
     return request('POST', settings.DJANGOSOLR_UPDATE_PATH, [('commit', str(commit).lower(),), ('overwrite', str(overwrite).lower())], { 'add': ddocs })
 
-def delete(docs, commit=True):
-    queries = []
-    for doc in docs:
-        m = doc._meta
-        doc.pre_delete()
-        queries.append(u'%s:%s' % (m.get_solr_id_field(), escape(m.get_solr_id_value(doc)))) 
-    return request('POST', settings.DJANGOSOLR_DELETE_PATH, [('commit', str(commit).lower(),)], {'delete': { 'query': ' OR '.join(queries) }})
+def delete(query, commit=True):
+    if not isinstance(query, basestring):
+        queries = []
+        for doc in query:
+            m = doc._meta
+            doc.pre_delete()
+            queries.append(u'%s:%s' % (m.get_solr_id_field(), escape(m.get_solr_id_value(doc))))
+        query = ' OR '.join(queries)
+    return request('POST', settings.DJANGOSOLR_DELETE_PATH, [('commit', str(commit).lower(),)], {'delete': { 'query': query }})
 
 def clear(model, commit=True):
     return request('POST', settings.DJANGOSOLR_DELETE_PATH, [('commit', str(commit).lower(),)], {'delete': { 'query': settings.DJANGOSOLR_TYPE_FIELD + ':' + model._meta.type}})

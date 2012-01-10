@@ -1,4 +1,4 @@
-from djangosolr.documents.query import Query
+from djangosolr.documents.query import Query, Q
 from djangosolr import solr
 
 class QuerySet(object):
@@ -152,3 +152,9 @@ class QuerySet(object):
         clone =  self._clone()
         clone._query.fq(*qs, **filters)
         return clone
+
+    def delete(self, *qs, **filters):
+        if qs or filters:
+            return self.q(*qs, **filters).delete()
+        else:
+            return solr.delete((self._query._q or Q('*:*')).get_query_string(self._model._meta))

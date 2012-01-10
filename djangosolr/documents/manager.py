@@ -45,6 +45,9 @@ class Manager(object):
     def get(self, id):
         pk = self._model._meta.pk
         return self._get_query_set().q(Q('%s:%s-%s' % (settings.DJANGOSOLR_ID_FIELD, self._model._meta.type, pk.prepare(id),)))[0]
+
+    def delete(self, *qs, **filters):
+        return self._get_query_set().delete(*qs, **filters)
     
     def clear(self):
         return solr.clear(self._model)
